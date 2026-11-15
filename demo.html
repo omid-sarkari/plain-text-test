@@ -94,6 +94,7 @@ body.closed .below{opacity:0;pointer-events:none}
 <body class="closed">
 <canvas id="fx"></canvas>
 <button class="mute" id="mute" type="button" aria-label="قطع و وصل موسیقی">🔊</button>
+<audio id="bgm" preload="auto" loop src="https://upload.wikimedia.org/wikipedia/commons/transcoded/3/3d/Payvar-Dehlavi-Concertino_for_Santur.ogg/Payvar-Dehlavi-Concertino_for_Santur.ogg.mp3"></audio>
 <main class="stage">
   <div class="greet" id="greet"></div>
   <div class="scene">
@@ -167,7 +168,7 @@ const CONFIG = {
   targetISO: "2027-02-14T18:00:00+03:30",
   venue: "تالار آفتاب",
   address: "مشهد، بلوار وکیل‌آباد، تالار آفتاب",
-  neshanUrl: "https://neshan.org/maps/search/" + encodeURIComponent("تالار آفتاب مشهد"),
+  neshanUrl: "https://neshan.org/maps/search/" + encodeURIComponent("تالار آفتاب مشهد بلوار وکیل آباد"),
   gmapUrl: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("تالار آفتاب مشهد"),
   apiBase: "https://rsvp-test.test-env-bd4b4f.workers.dev"
 };
@@ -191,8 +192,14 @@ if (guest) {
 }
 
 /* موسیقی (ملودی نمایشی؛ در نسخهٔ مشتری فایل آهنگ خودشان پخش می‌شود) */
-let actx = null, musicOn = false, musicTimer = null;
+let actx = null, musicOn = false, musicTimer = null, audioBad = false;
+$("bgm").addEventListener("error", () => { audioBad = true; });
 function startMusic() {
+  const a = $("bgm");
+  if (!audioBad) { a.volume = 0.9; const p = a.play(); if (p && p.then) p.then(() => { musicOn = true; $("mute").textContent = "🔊"; }).catch(() => startSynth()); else musicOn = true; return; }
+  startSynth();
+}
+function startSynth() {
   if (actx) { actx.resume(); musicOn = true; $("mute").textContent = "🔊"; return; }
   try {
     actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -222,6 +229,7 @@ function startMusic() {
 }
 function stopMusic() {
   musicOn = false;
+  $("bgm").pause();
   if (musicTimer) { clearTimeout(musicTimer); musicTimer = null; }
   if (actx) actx.suspend();
   $("mute").textContent = "🔇";
