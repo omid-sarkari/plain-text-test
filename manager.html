@@ -14,7 +14,7 @@ const API = 'https://rsvp-test.test-env-bd4b4f.workers.dev';
     const coming = items.filter(x => x.attending === 'میام');
     const people = coming.reduce((s, x) => s + (x.count || 0), 0);
     document.getElementById('sum').textContent = 'کل پاسخ‌ها: ' + items.length + ' خانواده | میام: ' + coming.length + ' خانواده | جمع نفرات: ' + people + ' نفر';
-    document.getElementById('list').innerHTML = items.map(x => '<li>' + x.name + ' — ' + x.attending + ' — ' + x.count + ' نفر</li>').join('');
+    document.getElementById('list').innerHTML = items.map(x => '<li>' + x.name + ' — ' + x.attending + ' — ' + x.count + ' نفر' + (x.msg ? ' — پیام: ' + x.msg : '') + '</li>').join('');
   } catch (e) {
     document.getElementById('sum').textContent = 'خطا در خواندن لیست';
   }
