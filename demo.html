@@ -27,13 +27,17 @@ canvas#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 .orn{color:var(--accent2);font-size:20px;letter-spacing:6px}
 .dline{font-size:15px;font-weight:600}
 .dsub{font-size:13px;color:#6b5b80}
-.doors{position:absolute;inset:-4% -3%;z-index:6;display:flex;transition:opacity .5s 1.5s,visibility 0s 1.9s}
-.door{flex:1;background:linear-gradient(150deg,#5d1622,var(--accent) 45%,#4a111b);position:relative;transition:transform 1.15s cubic-bezier(.65,.05,.25,1)}
-.door.l{border-radius:16px 0 0 16px}.door.r{border-radius:0 16px 16px 0;box-shadow:-6px 0 14px rgba(0,0,0,.25)}
-.door::after{content:"";position:absolute;inset:12px;border:1.5px solid rgba(201,162,74,.75);border-radius:10px}
-.doors.open .door.l{transform:translateX(-112%)}
-.doors.open .door.r{transform:translateX(112%);transition-delay:.45s}
-.doors.open{opacity:0;visibility:hidden;pointer-events:none}
+.riser{position:absolute;inset:0;z-index:3;transform:translateY(5%) scale(.93);transition:transform 1.15s cubic-bezier(.55,.06,.25,1) .5s}
+.scene.open .riser{transform:translateY(-13%) scale(.99)}
+.scene.settled .riser{transform:translateY(0) scale(1);transition-delay:0s}
+.env{position:absolute;inset:-4% -3%;z-index:6;perspective:1100px;transition:opacity .7s,transform .7s,visibility 0s .75s,z-index 0s .55s}
+.scene.open .env{z-index:2}
+.env .body{position:absolute;inset:0;background:linear-gradient(155deg,#5d1622,var(--accent) 48%,#4a111b);border-radius:14px;box-shadow:0 26px 44px -14px var(--shadow)}
+.env .body::after{content:"";position:absolute;inset:12px;border:1.5px solid rgba(201,162,74,.7);border-radius:9px;pointer-events:none}
+.env .pocket{position:absolute;inset:0;background:linear-gradient(200deg,#6d1a29,#521220);clip-path:polygon(0 34%,50% 66%,100% 34%,100% 100%,0 100%);opacity:.97}
+.env .flap{position:absolute;top:0;left:0;right:0;height:54%;background:linear-gradient(180deg,#7e2233,var(--accent) 72%,#5d1622);clip-path:polygon(0 0,100% 0,50% 100%);transform-origin:top center;transition:transform 1s cubic-bezier(.6,.05,.3,1),z-index 0s .45s;z-index:5;filter:drop-shadow(0 4px 5px rgba(0,0,0,.25))}
+.scene.open .env .flap{transform:rotateX(178deg);z-index:1}
+.env.gone{opacity:0;transform:translateY(30px);visibility:hidden;pointer-events:none}
 .seal{position:absolute;z-index:7;top:50%;left:50%;width:92px;height:92px;margin:-46px 0 0 -46px;cursor:pointer;filter:drop-shadow(0 6px 8px rgba(0,0,0,.4));transition:transform .7s,opacity .7s;background:none;border:0;padding:0}
 .seal.broken{transform:scale(1.35) rotate(-8deg);opacity:0;pointer-events:none}
 .hint{position:absolute;z-index:7;top:calc(50% + 62px);inset-inline:0;text-align:center;color:#fff;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.6);animation:pulse 1.8s ease-in-out infinite;pointer-events:none;transition:opacity .4s}
@@ -97,7 +101,8 @@ body.closed .below{opacity:0;pointer-events:none}
 <audio id="bgm" preload="auto" loop src="https://upload.wikimedia.org/wikipedia/commons/transcoded/3/3d/Payvar-Dehlavi-Concertino_for_Santur.ogg/Payvar-Dehlavi-Concertino_for_Santur.ogg.mp3"></audio>
 <main class="stage">
   <div class="greet" id="greet"></div>
-  <div class="scene">
+  <div class="scene" id="scene">
+    <div class="riser" id="riser">
     <div class="card3d" id="card3d">
       <section class="face front">
         <div class="frame"></div>
@@ -119,7 +124,8 @@ body.closed .below{opacity:0;pointer-events:none}
         <div class="poem">حضورتان، زیباترین هدیهٔ ماست</div>
       </section>
     </div>
-    <div class="doors" id="doors"><div class="door l"></div><div class="door r"></div></div>
+    </div>
+    <div class="env" id="env"><div class="body"></div><div class="pocket"></div><div class="flap"></div></div>
     <button class="seal" id="seal" type="button" aria-label="باز کردن کارت">
       <svg viewBox="0 0 100 100"><defs><radialGradient id="wg" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#e8cf8a"/><stop offset=".55" stop-color="#c9a24a"/><stop offset="1" stop-color="#8a6a24"/></radialGradient></defs><circle cx="50" cy="50" r="46" fill="url(#wg)"/><circle cx="50" cy="50" r="33" fill="none" stroke="#7a5c1c" stroke-width="2"/><text x="50" y="52" text-anchor="middle" dominant-baseline="central" font-size="21" font-weight="700" fill="#5d430f" font-family="Georgia,serif">O ♥ S</text></svg>
     </button>
@@ -273,7 +279,8 @@ function openCard() {
   $("seal").classList.add("broken");
   $("hint").classList.add("gone");
   setTimeout(() => {
-    $("doors").classList.add("open");
+    $("scene").classList.add("open");
+    setTimeout(() => { $("scene").classList.add("settled"); $("env").classList.add("gone"); }, 1750);
     document.body.classList.remove("closed");
     $("mute").classList.add("on");
     startMusic();
@@ -282,7 +289,7 @@ function openCard() {
   }, 650);
 }
 $("seal").onclick = openCard;
-$("doors").onclick = openCard;
+$("env").onclick = openCard;
 
 /* چرخش کارت */
 function flip() { $("card3d").classList.toggle("flipped"); }

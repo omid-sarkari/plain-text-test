@@ -1,24 +1,122 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>مدیریت مهمان‌ها — تست</title></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>پنل مدیریت مراسم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&family=Noto+Nastaliq+Urdu:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#7a1f2b;--accent2:#c9a24a;--ink:#2b2135;--mut:#6b5b80;--shadow:rgba(60,20,40,.28);--box:#fff}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Vazirmatn",Tahoma,sans-serif;color:var(--ink);background:linear-gradient(170deg,#f6e8ee,#fdf8ef 55%,#efe6f7);min-height:100vh}
+.wrap{max-width:560px;margin:0 auto;padding:20px 14px 40px}
+header{text-align:center;margin-bottom:16px}
+header .t{font-family:"Noto Nastaliq Urdu",serif;font-size:22px;line-height:2.1;color:var(--accent);margin:0}
+header .s{color:var(--mut);font-size:13px;margin:2px 0 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+.stat{background:var(--box);border-radius:16px;padding:12px 4px;text-align:center;box-shadow:0 12px 22px -12px var(--shadow)}
+.stat b{display:block;font-size:21px;color:var(--accent)}
+.stat span{font-size:11px;color:var(--mut)}
+.tools{display:flex;gap:8px;margin:6px 0 12px}
+.tools input{flex:1;padding:11px 14px;border-radius:12px;border:1px solid #d9cbe8;font:inherit;font-size:14px;background:#fff}
+.tools button{padding:11px 14px;border-radius:12px;border:0;background:var(--accent);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.tools button.ghost{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{padding:7px 13px;border-radius:999px;border:1px solid #d9cbe8;background:#fff;font:inherit;font-size:12.5px;cursor:pointer;color:var(--mut)}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.card{background:var(--box);border-radius:16px;padding:13px 15px;margin-bottom:9px;box-shadow:0 10px 20px -12px var(--shadow)}
+.card .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card .nm{font-weight:800;font-size:15px}
+.badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px}
+.badge.yes{background:#e3f4e8;color:#1e6b3c}
+.badge.no{background:#fbe7e9;color:#8c2434}
+.cnt{font-size:12.5px;color:var(--mut)}
+.tm{margin-inline-start:auto;font-size:11px;color:#a08bb5}
+.msg{margin-top:9px;background:#fdf6ec;border:1px solid #efdfba;border-radius:12px;padding:9px 12px;font-size:13.5px;line-height:1.9}
+.msg::before{content:"💌 پیام یادبود: ";font-weight:700;color:#8a6a24;font-size:12px}
+.empty{text-align:center;color:var(--mut);padding:34px 10px;font-size:14px}
+.err{background:#fbe7e9;color:#8c2434;border-radius:12px;padding:12px;text-align:center;font-size:13.5px}
+.foot{text-align:center;color:#a08bb5;font-size:11.5px;margin-top:16px}
+@media print{.tools,.chips,.foot{display:none}}
+</style>
+</head>
 <body>
-<h2>مدیریت مهمان‌ها</h2>
-<p id="sum">در حال خواندن...</p>
-<ul id="list"></ul>
+<div class="wrap">
+  <header>
+    <p class="t">پنل مدیریت مراسم</p>
+    <p class="s">امید سرکاری و سایه اکبری — جمعه ۲۵ بهمن ۱۴۰۵، تالار آفتاب</p>
+  </header>
+  <div class="stats">
+    <div class="stat"><b id="sTotal">–</b><span>کل پاسخ‌ها</span></div>
+    <div class="stat"><b id="sYes">–</b><span>می‌آیند (خانواده)</span></div>
+    <div class="stat"><b id="sPeople">–</b><span>مجموع مهمانان</span></div>
+    <div class="stat"><b id="sNo">–</b><span>نمی‌آیند</span></div>
+  </div>
+  <div class="tools">
+    <input type="search" id="q" placeholder="جست‌وجو در نام مهمان…">
+    <button id="btnRefresh" type="button">به‌روزرسانی</button>
+    <button id="btnPrint" class="ghost" type="button">چاپ لیست</button>
+  </div>
+  <div class="chips" id="chips">
+    <button class="chip on" data-f="all" type="button">همه</button>
+    <button class="chip" data-f="yes" type="button">می‌آیند</button>
+    <button class="chip" data-f="no" type="button">نمی‌آیند</button>
+    <button class="chip" data-f="msg" type="button">دارای پیام</button>
+  </div>
+  <div id="list"><p class="empty">در حال دریافت پاسخ‌ها…</p></div>
+  <p class="foot">این پنل زنده است و هر ۲۰ ثانیه خودش به‌روز می‌شود.</p>
+</div>
 <script>
-const API = 'https://rsvp-test.test-env-bd4b4f.workers.dev';
-(async () => {
+const API = "https://rsvp-test.test-env-bd4b4f.workers.dev";
+const fa = n => Number(n || 0).toLocaleString("fa-IR");
+let items = [], filter = "all";
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function when(t) { try { return new Date(t).toLocaleString("fa-IR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } }
+function render() {
+  const q = document.getElementById("q").value.trim();
+  const yes = items.filter(x => x.attending === "میام");
+  document.getElementById("sTotal").textContent = fa(items.length);
+  document.getElementById("sYes").textContent = fa(yes.length);
+  document.getElementById("sNo").textContent = fa(items.length - yes.length);
+  document.getElementById("sPeople").textContent = fa(yes.reduce((a, x) => a + (Number(x.count) || 0), 0));
+  let view = items.slice().reverse();
+  if (filter === "yes") view = view.filter(x => x.attending === "میام");
+  if (filter === "no") view = view.filter(x => x.attending !== "میام");
+  if (filter === "msg") view = view.filter(x => x.msg);
+  if (q) view = view.filter(x => (x.name || "").includes(q));
+  const box = document.getElementById("list");
+  if (!view.length) { box.innerHTML = '<p class="empty">هنوز پاسخی در این بخش ثبت نشده است.</p>'; return; }
+  box.innerHTML = view.map(x => {
+    const isYes = x.attending === "میام";
+    return '<div class="card"><div class="top">' +
+      '<span class="nm">' + esc(x.name) + '</span>' +
+      '<span class="badge ' + (isYes ? "yes" : "no") + '">' + (isYes ? "می‌آید" : "نمی‌آید") + '</span>' +
+      (isYes ? '<span class="cnt">' + fa(x.count) + ' نفر</span>' : '') +
+      '<span class="tm">' + esc(when(x.t)) + '</span></div>' +
+      (x.msg ? '<div class="msg">' + esc(x.msg) + '</div>' : '') +
+      '</div>';
+  }).join("");
+}
+async function load() {
   try {
-    const items = await (await fetch(API + '/list')).json();
-    const coming = items.filter(x => x.attending === 'میام');
-    const people = coming.reduce((s, x) => s + (x.count || 0), 0);
-    document.getElementById('sum').textContent = 'کل پاسخ‌ها: ' + items.length + ' خانواده | میام: ' + coming.length + ' خانواده | جمع نفرات: ' + people + ' نفر';
-    document.getElementById('list').innerHTML = items.map(x => '<li>' + x.name + ' — ' + x.attending + ' — ' + x.count + ' نفر' + (x.msg ? ' — پیام: ' + x.msg : '') + '</li>').join('');
+    const r = await fetch(API + "/list");
+    items = await r.json();
+    render();
   } catch (e) {
-    document.getElementById('sum').textContent = 'خطا در خواندن لیست';
+    document.getElementById("list").innerHTML = '<p class="err">خطا در دریافت اطلاعات. اتصال اینترنت را بررسی و دوباره تلاش کنید.</p>';
   }
-})();
+}
+document.getElementById("btnRefresh").onclick = load;
+document.getElementById("btnPrint").onclick = () => window.print();
+document.getElementById("q").addEventListener("input", render);
+document.getElementById("chips").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  document.querySelectorAll(".chip").forEach(c => c.classList.remove("on"));
+  b.classList.add("on"); filter = b.dataset.f; render();
+});
+load();
+setInterval(load, 20000);
 </script>
 </body>
 </html>
