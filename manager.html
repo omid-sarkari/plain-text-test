@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مدیریت مهمان‌ها — تست</title></head>
+<body>
+<h2>مدیریت مهمان‌ها</h2>
+<p id="sum">در حال خواندن...</p>
+<ul id="list"></ul>
+<script>
+const API = 'https://rsvp-test.test-env-bd4b4f.workers.dev';
+(async () => {
+  try {
+    const items = await (await fetch(API + '/list')).json();
+    const coming = items.filter(x => x.attending === 'میام');
+    const people = coming.reduce((s, x) => s + (x.count || 0), 0);
+    document.getElementById('sum').textContent = 'کل پاسخ‌ها: ' + items.length + ' خانواده | میام: ' + coming.length + ' خانواده | جمع نفرات: ' + people + ' نفر';
+    document.getElementById('list').innerHTML = items.map(x => '<li>' + x.name + ' — ' + x.attending + ' — ' + x.count + ' نفر</li>').join('');
+  } catch (e) {
+    document.getElementById('sum').textContent = 'خطا در خواندن لیست';
+  }
+})();
+</script>
+</body>
+</html>

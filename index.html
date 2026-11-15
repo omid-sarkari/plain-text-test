@@ -1,8 +1,39 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>این یک متن آزمایشی است</body>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>کارت دعوت — تست</title></head>
+<body>
+<h2 id="greet">دعوتید</h2>
+<p>مراسم ما — صفحهٔ تست</p>
+<p>تاریخ و ساعت: —</p>
+<p>آدرس: مشهد</p>
+<hr>
+<div id="nameRow"><p><label>اسم خانواده: <input id="name" type="text"></label></p></div>
+<p><label>میاید؟
+<select id="att"><option value="میام">میام</option><option value="نمیام">نمیام</option></select></label></p>
+<p><label>چند نفرید؟ <input id="count" type="number" value="1" min="0" max="50"></label></p>
+<button id="send">ثبت پاسخ</button>
+<p id="msg"></p>
+<script>
+const API = 'https://rsvp-test.test-env-bd4b4f.workers.dev';
+const n = new URLSearchParams(location.search).get('n');
+if (n) {
+  document.getElementById('greet').textContent = 'سلام ' + n + ' عزیز، دعوتید';
+  document.getElementById('nameRow').style.display = 'none';
+}
+document.getElementById('send').onclick = async () => {
+  const name = n || document.getElementById('name').value.trim();
+  const attending = document.getElementById('att').value;
+  const count = Number(document.getElementById('count').value || 0);
+  const msg = document.getElementById('msg');
+  if (!name) { msg.textContent = 'اول اسم خانواده رو بنویس'; return; }
+  msg.textContent = 'در حال ثبت...';
+  try {
+    const r = await fetch(API + '/rsvp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name, attending: attending, count: count }) });
+    const j = await r.json();
+    msg.textContent = j.ok ? 'ثبت شد. ممنون!' : 'خطا شد، دوباره بزن';
+  } catch (e) { msg.textContent = 'خطا شد، دوباره بزن'; }
+};
+</script>
+</body>
 </html>
