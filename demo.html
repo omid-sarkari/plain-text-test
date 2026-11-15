@@ -83,6 +83,13 @@ body.closed .below{opacity:0;pointer-events:none}
 .err{color:#c22f42;font-size:12.5px;min-height:18px;text-align:center;margin:0 0 6px}
 .okmsg{display:none;text-align:center;color:#1e7d46;font-weight:700;padding:10px 0 2px}
 .okmsg.on{display:block}
+.donebox{display:none;background:#eef7f0;border:1px solid #bfe3cc;border-radius:14px;padding:14px;text-align:center;margin-bottom:12px}
+.donebox.on{display:block}
+.donebox .dt{margin:0 0 10px;font-weight:700;color:#1e6b3c;font-size:14px;line-height:2}
+.editbtn{padding:9px 20px;border-radius:10px;border:1px solid #1e6b3c;background:#fff;color:#1e6b3c;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.brandstrip{width:min(92vw,420px);margin:0 auto 14px;padding:14px 16px;border-radius:16px;background:linear-gradient(150deg,#5d1622,var(--accent) 55%,#4a111b);color:#f7e9c9;text-align:center;box-shadow:0 14px 26px -12px var(--shadow)}
+.brandstrip p{margin:0 0 9px;font-size:13.5px;font-weight:700}
+.brandstrip a{display:inline-block;padding:9px 18px;border-radius:10px;background:var(--accent2);color:#3d2c05;font-size:13px;font-weight:800;text-decoration:none}
 .mute{position:fixed;top:14px;left:14px;z-index:25;width:44px;height:44px;border-radius:50%;border:0;background:#fff;box-shadow:0 6px 16px -6px var(--shadow);font-size:19px;cursor:pointer;display:none}
 .mute.on{display:block}
 .foot{text-align:center;font-size:12px;color:#8a7a9e;padding:0 16px 30px}
@@ -150,6 +157,11 @@ body.closed .below{opacity:0;pointer-events:none}
 <section class="rsvp below" id="rsvp">
   <h2>آیا در مراسم ما حضور خواهید داشت؟</h2>
   <p class="sub">فرم اعلام حضور میهمانان</p>
+  <div class="donebox" id="donebox">
+    <p class="dt" id="donetxt"></p>
+    <button class="editbtn" id="btnEdit" type="button">ویرایش پاسخ</button>
+  </div>
+  <div id="formbox">
   <input type="text" id="gName" placeholder="نام و نام خانوادگی خود را وارد کنید">
   <textarea id="gMsg" placeholder="به رسم یادبود پیامی بنویسید (اختیاری)"></textarea>
   <div class="opts">
@@ -162,7 +174,12 @@ body.closed .below{opacity:0;pointer-events:none}
   <p class="err" id="err"></p>
   <button class="send" id="send" type="button">ثبت اطلاعات</button>
   <p class="okmsg" id="okmsg">ثبت شد. ممنون از همراهی‌تون 🌸</p>
+  </div>
 </section>
+<div class="brandstrip">
+  <p>✦ این کارت، ساختهٔ تیم ماست ✦</p>
+  <a href="https://wa.me/989338081744" target="_blank" rel="noopener">برای مراسم شما هم می‌سازیم — سفارش کارت</a>
+</div>
 <footer class="foot">نمونهٔ نمایشی کارت دعوت دیجیتال — در نسخهٔ مشتری، عکس، آهنگ و متن‌ها اختصاصی می‌شود.</footer>
 <div class="modal" id="mMap"><div class="sheet"><button class="x" data-close type="button">×</button><h3>محل مراسم</h3><p id="addrM"></p><div class="maps"><a id="neshanLink" target="_blank" rel="noopener">مسیریابی با نشان</a><a id="gmapLink" target="_blank" rel="noopener">گوگل‌مپ</a></div></div></div>
 <div class="modal" id="mInfo"><div class="sheet"><button class="x" data-close type="button">×</button><h3>اطلاعات بیشتر</h3><p>با احترام، چنانچه سعادت میزبانی شما را نداریم، ما را مطلع فرمایید.<br>پارکینگ مراسم محدود است؛ لطفاً زودتر تشریف بیاورید.</p></div></div>
@@ -363,21 +380,65 @@ tick(); setInterval(tick, 1000);
 document.querySelectorAll("input[name=ans]").forEach(r => r.addEventListener("change", () => {
   $("cntrow").classList.toggle("on", document.querySelector("input[name=ans]:checked")?.value === "yes");
 }));
+/* هر مهمان فقط یک پاسخ: شناسهٔ ثابت روی گوشی مهمان می‌ماند و ثبتِ دوباره، همان پاسخ قبلی را ویرایش می‌کند */
+const LS_ID = "rsvp_demo_id", LS_RESP = "rsvp_demo_resp";
+function guestId() {
+  const g = new URLSearchParams(location.search).get("g");
+  if (g) return "link_" + g.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 48);
+  try {
+    let id = localStorage.getItem(LS_ID);
+    if (!id) { id = "g" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); localStorage.setItem(LS_ID, id); }
+    return id;
+  } catch (e) { return ""; }
+}
+const faNum = n => Number(n || 0).toLocaleString("fa-IR");
+function showDone(p) {
+  $("donetxt").textContent = "✓ پاسخ شما ثبت شده است: " + p.name + " — " + (p.attending === "میام" ? "میام، " + faNum(p.count) + " نفر" : "نمیام");
+  $("donebox").classList.add("on");
+  $("formbox").style.display = "none";
+}
+function loadSaved() {
+  try {
+    const p = JSON.parse(localStorage.getItem(LS_RESP) || "null");
+    if (p && p.name) showDone(p);
+  } catch (e) {}
+}
+$("btnEdit").onclick = () => {
+  try {
+    const p = JSON.parse(localStorage.getItem(LS_RESP) || "null");
+    if (p) {
+      $("gName").value = p.name || "";
+      $("gMsg").value = p.msg || "";
+      const r = document.querySelector("input[name=ans][value=" + (p.attending === "میام" ? "yes" : "no") + "]");
+      if (r) r.checked = true;
+      $("cntrow").classList.toggle("on", p.attending === "میام");
+      if (p.count) $("gCount").value = String(Math.min(p.count, 10));
+    }
+  } catch (e) {}
+  $("donebox").classList.remove("on");
+  $("formbox").style.display = "";
+  $("send").disabled = false;
+  $("send").textContent = "ثبت ویرایش";
+  $("okmsg").classList.remove("on");
+};
 $("send").onclick = async () => {
   const name = ($("gName").value || "").trim();
   const a = document.querySelector("input[name=ans]:checked");
   if (!name) { $("err").textContent = "لطفاً نام‌تون رو بنویسید."; return; }
   if (!a) { $("err").textContent = "لطفاً یکی از گزینه‌ها رو انتخاب کنید."; return; }
   const yes = a.value === "yes";
-  const payload = { name: name, attending: yes ? "میام" : "نمیام", count: yes ? Number($("gCount").value) : 0, msg: ($("gMsg").value || "").trim() };
+  const payload = { id: guestId(), name: name, attending: yes ? "میام" : "نمیام", count: yes ? Number($("gCount").value) : 0, msg: ($("gMsg").value || "").trim() };
   $("err").textContent = "";
   try {
     const r = await fetch(CONFIG.apiBase + "/rsvp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const j = await r.json();
-    if (j.ok) { $("okmsg").classList.add("on"); $("send").disabled = true; }
-    else $("err").textContent = "خطا شد؛ دوباره تلاش کنید.";
+    if (j.ok) {
+      try { localStorage.setItem(LS_RESP, JSON.stringify(payload)); } catch (e) {}
+      showDone(payload);
+    } else $("err").textContent = "خطا شد؛ دوباره تلاش کنید.";
   } catch (e) { $("err").textContent = "خطا شد؛ دوباره تلاش کنید."; }
 };
+loadSaved();
 </script>
 </body>
 </html>
