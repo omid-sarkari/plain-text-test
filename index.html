@@ -13,7 +13,24 @@
 <select id="att"><option value="میام">میام</option><option value="نمیام">نمیام</option></select></label></p>
 <p><label>چند نفرید؟ <input id="count" type="number" value="1" min="0" max="50"></label></p>
 <button id="send">ثبت پاسخ</button>
+<p><button id="soundTest">🔊 تست صدا</button></p>
 <p id="msg"></p>
+<script>
+document.getElementById('soundTest').onclick = () => {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const notes = [523.25, 587.33, 659.25, 783.99, 659.25, 587.33, 523.25];
+  notes.forEach((f, i) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'triangle'; o.frequency.value = f;
+    o.connect(g); g.connect(ctx.destination);
+    const t = ctx.currentTime + i * 0.7;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.25, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.65);
+    o.start(t); o.stop(t + 0.7);
+  });
+};
+</script>
 <script>
 const API = 'https://rsvp-test.test-env-bd4b4f.workers.dev';
 const n = new URLSearchParams(location.search).get('n');
